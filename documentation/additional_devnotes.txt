@@ -1,0 +1,7 @@
+All the code so far is implemented into two classes:
+ - housing_manager.js
+ - population_manager.js
+
+The file javascript_test.js is used to test out the functionality of the two classes. I have been able to successfully test this using Visual Studio Code; I cannot say the same for any other IDEs. The file app.js is the "hello world" program provided by the nodejs website.
+
+ - gdInuk
