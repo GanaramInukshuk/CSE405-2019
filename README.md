@@ -6,6 +6,8 @@ Prof.: Dr. David Turner
 This file will be used as the program's software requirements specification (SRS).
 This document is tentative and is subject to change.
 
+Expect some formatting mistakes as I get the readme properly set up.
+
 UPDATED: 23 APR 19
 
 ---------------------------------------------------------------------------
