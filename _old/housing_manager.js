@@ -4,6 +4,8 @@
 // This is a housing manager class intended for use with a crudely built
 // city simulator
 
+// TODO: Rewrite this for use with the React library
+
 // The logic for this program should operate like a healthbar, except the
 // healthbar can change its max hitpoints (which already happens in some
 // games):
