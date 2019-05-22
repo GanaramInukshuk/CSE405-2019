@@ -4,7 +4,6 @@
 // This is a housing manager class intended for use with a crudely built
 // city simulator
 
-// TODO: Rewrite this for use with the React library
 
 // The logic for this program should operate like a healthbar, except the
 // healthbar can change its max hitpoints (which already happens in some
@@ -16,11 +15,6 @@
 //   the difference between the max health and current health
 // - Positive housing demand is healing over time
 // - Negative housing demand is damage over time
-
-// The Housing Manager also calculates the population of the city based on
-// actual statistics regarding the number of people living per household; this
-// gets fed into the Population Manager which breaks up the population into age
-// groups.
 
 class HousingManager {
   // Housing weights
@@ -41,10 +35,6 @@ class HousingManager {
   }
 
   constructor() {
-    // Initialize the housing vector to an all-zero vector
-    // Fun fact: the index of each element represents the occupancy of each
-    // household without any off-by-one nonsense (simply because I also have to
-    // also track the number of empty households).
     this._hv = [0, 0, 0, 0, 0, 0, 0, 0];
     this._occupiedHouses = 0;
     this._totalHouses    = 0;
@@ -65,10 +55,32 @@ class HousingManager {
   // Function for adding/removing houses to the Housing Manager
   // Using the healthbar analogy, this is changing the size of the healthbar
   addHousing(nHouses) {
-    if (this._totalHouses <= nHouses) this._totalHouses += nHouses;
+    // console.log("[HousingManager]: Attempting to add houses: " + nHouses);
 
-    // There is currently no code to account for removing houses as that would
-    // require code to handle eviction
+    // Don't allow the housing count to become negative
+    // If a value gets entered that would make it negative, have the count go
+    // to zero instead
+
+    // let prevTotal = this._totalHouses;
+    // let prevOccup = this._occupiedHouses;
+
+    if ((this._totalHouses + nHouses) < 0) this._totalHouses = 0;
+    else this._totalHouses += nHouses;
+
+    // Trying to remove houses runs the risk of evicting occupants out of an
+    // already occupied house; the lazy way to simulate this is that any
+    // houses removed will always be empty if there are empty houses
+    // available; otherwise, if there are no empty houses, the number of
+    // occupied houses will decrease as well
+
+    // A more interesting way to do this is to decrease the number of occupied
+    // houses based on a probability such that the probability is the number of
+    // occupied houses divided the total number of houses, but this gets
+    // complicated really quick; just pretend the city's generously relocating
+    // the tenants to a vacant house
+
+    if (this._occupiedHouses >= this._totalHouses)
+      this._occupiedHouses = this._totalHouses;
   }
 
   // Function for adding or removing occupants
@@ -78,7 +90,7 @@ class HousingManager {
     if (nHouses > 0 && nHouses > this.VacantHouses)
       // Adding health but the healthbar is close to max health
       this._occupiedHouses = this._totalHouses;
-    else if (nHouses < 0 && nHouses < this._occupiedHouses)
+    else if (nHouses < 0 && (this._occupiedHouses + nHouses) < 0)
       // Removing health but the healthbar is close to 0 health
       this._occupiedHouses = 0;
     else
@@ -92,69 +104,74 @@ class HousingManager {
     // for however many times a house gets built, having this function call its
     // generate function is too frequent
     //this.generateHousingOccupancy();
+
+    
+    // console.log(this._occupiedHouses + " and " + this._totalHouses);
+
+    // return this._occupiedHouses;
   }
 
-  // Function for generating occupancy; this can be called independently
-  // of the addOccupants function
+  // Function for generating occupancy
+  // Meaningful occupancy data can only be generated if there's at least 100
+  // occupied households
   generateHousingOccupancy() {
-    // If there are less than 20 houses, don't bohter
-    if (this._occupiedHouses === 0) {
+    if (this._occupiedHouses <= 99) {
       this._hv = [0, 0, 0, 0, 0, 0, 0, 0];
       return;
-    }
-
-    // Generate tiny fluctuations for the housing weights, but only do so if
-    // the number of occupied houses is above 100
-    var wVector = this.HOUSING_WEIGHTS;       // Copy of the housing weights
-    var fVector = [0, 0, 0, 0, 0, 0, 0, 0];   // Fluctuations vector
-    var wSum = 0;
-    if (this._occupiedHouses > 100) {
-      for (var i = 0; i < wVector.length; i++) {
-        // Fluctuations have an effective range of [-2.5%, 2.5%)
-        fVector[i] = wVector[i] * (1 + ((Math.random() - 0.5) / 20));
-        wSum += fVector[i];
+    } else {
+      // Generate tiny fluctuations for the housing weights, but only do so if
+      // the number of occupied houses is above 100
+      let wVector = this.HOUSING_WEIGHTS;       // Copy of the housing weights
+      let fVector = [0, 0, 0, 0, 0, 0, 0, 0];   // Fluctuations vector
+      let wSum = 0;
+      if (this._occupiedHouses > 10) {
+        for (let i = 0; i < wVector.length; i++) {
+          // Divide by 40 for +/- 1%
+          fVector[i] = wVector[i] * (1 + ((Math.random() - 0.5) / 40));
+          wSum += fVector[i];
+        }
+      } else {
+        fVector = wVector;
+        wSum = 1;
       }
-    } else {
-      fVector = wVector;
-      wSum = 1;
-    }
 
-    // Generate the housing vector
-    var vSum = 0;   // The sum of the housing vector's elements
-    for (var i = 0; i < wVector.length; i++) {
-      this._hv[i] = Math.round(this._occupiedHouses * fVector[i] / wSum);
-      vSum += this._hv[i];
-    }
+      // Generate the housing vector
+      let vSum = 0;   // The sum of the housing vector's elements
+      for (let i = 0; i < wVector.length; i++) {
+        this._hv[i] = Math.round(this._occupiedHouses * fVector[i] / wSum);
+        vSum += this._hv[i];
+      }
 
-    // Correct the rounding error here
-    // A positive rDiff means there are more houses than there should be
-    // A negative rDiff means there are fewer houses than there should be
-    // Rounding errors are corrected by ideally adding/removing houses of the
-    // smallest household size
-    var rDiff = vSum - this._occupiedHouses;
-    if (this._occupiedHouses === 1) {
-      // This is to introduce the really interesting case of having a city with
-      // a population of 1
-      this._hv = [1, 0, 0, 0, 0, 0, 0, 0];
-    } else {
-      if (rDiff !== 0) {
-        // Traverse the array from beginning to end
-        // Find the first element such that adding/subtracting rDiff produces
-        // zero or a positive number
-        var i = 0;
-        for (; i < this._hv.length; i++)
-          if (this._hv[i] - rDiff >= 0) break;
+      // Correct the rounding error here
+      // A positive rDiff means there are more houses than there should be
+      // A negative rDiff means there are fewer houses than there should be
+      // Rounding errors are corrected by ideally adding/removing houses of the
+      // smallest household size, which only adds/removes one person at a time
+      let rDiff = vSum - this._occupiedHouses;
+      if (this._occupiedHouses === 1) {
+        // This is to introduce the really interesting case of having a city with
+        // a population of 1
+        this._hv = [1, 0, 0, 0, 0, 0, 0, 0];
+      } else {
+        if (rDiff !== 0) {
+          // Traverse the array from beginning to end
+          // Find the first element such that adding/subtracting rDiff produces
+          // zero or a positive number
+          let i = 0;
+          for (; i < this._hv.length; i++)
+            if (this._hv[i] - rDiff >= 0) break;
 
-        this._hv[i] -= rDiff;
+          this._hv[i] -= rDiff;
 
-        console.log("[HousingManager]: Corrected a rounding error of " + rDiff + " by adjusting index " + i);
+          // console.log("[HousingManager]: Corrected a rounding error of " + rDiff + " by adjusting index " + i);
+        }
       }
     }
   }
 
   // Debug function for printing the individual age buckets
   printHousingVector() {
-    var pv = this._hv;
+    let pv = this._hv;
     console.log("[HousingManager]: Total: " + this.TotalHouses + " Occupied: " + this.OccupiedHouses + " Indiv: " + pv[0] + " " + pv[1] + " " + pv[2] + " " + pv[3] + " " + pv[4] + " " + pv[5] + " " + pv[6] + " " + pv[7]);
   }
 }

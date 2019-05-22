@@ -1,13 +1,42 @@
 /* Modify this as needed */
 .App {
-  text-align: center;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  margin: 1em;
+  padding: 0;
+  background-color: #aaa;
+}
 
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+h1, h2, h3, h4, h5, h6 {
+  font-variant: small-caps;
+  font-weight: bolder;
+  padding: 0em .5em;
+  margin: 0px;
+  background-color: #305c9b;
   color: white;
+  /*border-left: 2px solid #21275b;*/
+}
+
+.MainContainer {
+  margin: 1em;
+  /*border: 2px solid #305c9b;*/
+  background-color: #eee;
+}
+
+.Subcontainer {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0.5em 1em;
+}
+
+.MainContainer > p, .Subcontainer > p {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0.5em 1em;
+}
+
+button {
+	width: 80px;
+	margin: 0;
+	padding: .2em;
+	border-collapse: collapse;
 }
