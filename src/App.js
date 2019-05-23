@@ -63,7 +63,12 @@ class App extends React.Component {
     // Game updates go here and happen every 120 game ticks
     if (this.state.gameTime % 120 === 0) {
       // This represents a residential demand of 5 households per week
-      this.updateOccupancy(5);
+
+      // TODO: Instead of a raw value, this could be a percentage
+      // of the current occupancy
+      let housingDemand = Math.round((Math.random() -0.1) * 10);
+
+      this.updateOccupancy(housingDemand);
     }
   }
 

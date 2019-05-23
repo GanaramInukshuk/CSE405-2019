@@ -64,7 +64,7 @@ export class Timekeeper extends React.Component {
     }
 
     // Day currently commented out... for now...
-    return "Date: " /*+ (day + 1) + " "*/ + month + " " + (year + 2000) + " (Week " + (week + 1) + "; Tick: " + (tick) + ")";
+    return "Date: " + (day + 1) + " " + month + " " + (year + 2000) + " (Week " + (week + 1) /*+ "; Tick: " + (tick)*/ + ")";
   }
 
   render() {
