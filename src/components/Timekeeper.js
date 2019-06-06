@@ -9,8 +9,6 @@
 //   adds seven intercalary days (effectively an extra week) at the end of
 //   DEC every 5 to 6 years
 
-// 
-
 import React from 'react';
 
 export class Timekeeper extends React.Component {
@@ -60,17 +58,28 @@ export class Timekeeper extends React.Component {
       case (week < 43) : { month = "OCT"; day -= 273; break; }
       case (week < 48) : { month = "NOV"; day -= 301; break; }
       case (week < 52) : { month = "DEC"; day -= 336; break; }
-      default : { month = "LOLWUT"; }
+      default : { month = "MONTH ERROR"; }
     }
 
-    // Day currently commented out... for now...
-    return "Date: " + (day + 1) + " " + month + " " + (year + 2000) + " (Week " + (week + 1) /*+ "; Tick: " + (tick)*/ + ")";
+    let dayOfWeek;
+    switch (day % 7) {
+      case (0) : { dayOfWeek = "MON"; break; }
+      case (1) : { dayOfWeek = "TUE"; break; }
+      case (2) : { dayOfWeek = "WED"; break; }
+      case (3) : { dayOfWeek = "THU"; break; }
+      case (4) : { dayOfWeek = "FRI"; break; }
+      case (5) : { dayOfWeek = "SAT"; break; }
+      case (6) : { dayOfWeek = "SUN"; break; }
+      default : { dayOfWeek = "DAY ERROR"; }
+    }
+
+    return "Date: " + dayOfWeek + ", " + (day + 1) + " " + month + " " + (year + 2000) + " (Week " + (week + 1) /*+ "; Tick: " + (tick)*/ + ")";
   }
 
   render() {
-      return(
-        <p className="Timekeeper">{this.calculateTime()}</p>
-      )
+    return(
+      <p className="Timekeeper">{this.calculateTime()}</p>
+    );
   }
 }
 

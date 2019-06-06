@@ -169,7 +169,7 @@ class PopulationManager {
 module.exports = PopulationManager;
 
 // // Test code
-// var testPop = 250;
+// var testPop = 1000;
 // var pm = new PopulationManager();
 // pm.PopulationTotal = testPop;
 

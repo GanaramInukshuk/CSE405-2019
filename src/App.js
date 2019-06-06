@@ -12,6 +12,8 @@ import './App.css';
 import HousingManager    from "./components/HousingManager";
 import PopulationManager from "./components/PopulationManager";
 import Timekeeper        from "./components/Timekeeper";
+import EducationManager  from "./components/EducationManager";
+import WorkplaceManager  from './components/WorkplaceManager';
 
 // Notes for timekeeping:
 // Except for a few values that have to update more often, the game updates
@@ -44,15 +46,37 @@ class App extends React.Component {
 
     // Define values here...
     this.state = {
-      money: 100000,
-
+      money: 250000,
       housingOccupied: 0,
       housingTotal: 0,
-
       population: 0,
+      gameTime: 0,
 
-      gameTime: 0
+      educationCapacity: 0,
+      studentCount: 0,
+
+      // Pass the employee count to WorkplaceManager and it will then return
+      // the number of employeed workers
+      employeeCount: 0,
+      industrialCapacity: 0,
+
+      testField: 12345
     }
+
+    // A different JSON object for various costs
+    this.cost = {
+      housing: 1000,
+      propertyTax: 5,
+
+      education: 20,
+
+      revenuePerExport: 8,
+      salesTax: 3,
+
+      test: 123
+    }
+
+    // this.getDataFromChild.bind();
   }
 
   gameTick = () => {
@@ -62,13 +86,45 @@ class App extends React.Component {
 
     // Game updates go here and happen every 120 game ticks
     if (this.state.gameTime % 120 === 0) {
-      // This represents a residential demand of 5 households per week
+      // Up to half of the current vacancy will be added as new residents
+      // or 1/50th of current occupancy will move out
+      let housingDemand = 1;
+      let rand = Math.floor(Math.random() * 20);
+      if (rand === 0)
+        housingDemand = Math.round(Math.random() / 50 * this.hsgMgr.OccupiedHouses);
+      else
+        housingDemand = Math.round(Math.random() / 2 * this.hsgMgr.VacantHouses);
 
-      // TODO: Instead of a raw value, this could be a percentage
-      // of the current occupancy
-      let housingDemand = Math.round((Math.random() -0.1) * 10);
-
+      // console.log(rand);
       this.updateOccupancy(housingDemand);
+
+      
+
+      let revenue = 0;
+      revenue += this.state.housingOccupied * this.cost.propertyTax;
+      revenue -= this.state.educationCapacity * this.cost.education;
+
+      // Calculate revenue from exports
+      if (this.state.employeeCount >= this.state.industrialCapacity) {
+        revenue += this.state.industrialCapacity * this.cost.revenuePerExport;
+      } else {
+        revenue += this.state.employeeCount * this.cost.revenuePerExport;
+      }
+
+      // console.log("Education cost: " + this.state.educationCapacity * this.cost.education);
+
+      let newState = {
+        // Property tax; this gets added back to this.money
+        money: this.state.money + revenue,
+
+        // Update student count
+        studentCount: Math.round((this.popMgr.ChildPop + this.popMgr.TeenPop) * 0.60),
+
+        // Update eligible workforce
+        employeeCount: Math.round((this.popMgr.YoungAdultPop + this.popMgr.AdultPop) * 0.60),
+      }
+
+      this.setState(newState);
     }
   }
 
@@ -85,13 +141,24 @@ class App extends React.Component {
   }
 
   updateHousing = (amt) => {
-    this.hsgMgr.addHousing(amt);
-    this.hsgMgr.generateHousingOccupancy();
+    // Demolishing houses only recoups 10% construction cost
+    let constructionCost;
+    if (amt >= 0 ) constructionCost = amt * this.cost.housing;
+    else constructionCost = amt * this.cost.housing / 10;
 
-    this.setState({
-      housingOccupied: this.hsgMgr.OccupiedHouses,
-      housingTotal:    this.hsgMgr.TotalHouses
-    })
+    if (constructionCost <= this.state.money) {
+      this.hsgMgr.addHousing(amt);
+      this.hsgMgr.generateHousingOccupancy();
+
+      this.setState({
+        housingOccupied: this.hsgMgr.OccupiedHouses,
+        housingTotal:    this.hsgMgr.TotalHouses
+      })
+
+      this.setState({
+        money: this.state.money - constructionCost
+      });
+    }
   }
 
   updateOccupancy = (amt) => {
@@ -107,10 +174,14 @@ class App extends React.Component {
 
   // Function needed to display the population
   updatePopulation = () => {
-    if (this.state.housingOccupied < 100)
-      return "Minimum of 100 occupied houses needed to generate a census.";
-    else
-      return this.state.population + " residents";
+    if (this.state.housingOccupied < 100) return "Population: ???";
+    else return "Population: " + this.state.population;
+  }
+
+  // For getting data from child
+  getDataFromChild = (updatedState) => {
+    // console.log("[App]: From child: " + data);
+    this.setState(updatedState);
   }
 
   render() {
@@ -118,13 +189,19 @@ class App extends React.Component {
       <div className="App">
       <h1>Experimental City Incrementer</h1>
         <div className="MainContainer">
-          <h3>City Overview</h3>
-          <p>Money: (This counter doesn't work yet)</p>
+          <h3>City Overview and Population Breakdown</h3>
+          <p>Money: {this.state.money}</p>
           <Timekeeper tickCountFromParent={this.state.gameTime}/>
+          <p>Population breakdown updates each week. Meaningful information is generated at a 100 occupied houses.</p>
+          <p>{this.updatePopulation()}</p>
+          <p>Maximum eligible workforce: {this.state.employeeCount}</p>
+          <p>Maximum educatable children: {this.state.studentCount}</p>
+          {/* <p>Employed: {this.state.industrialWorkers} </p> */}
         </div>
         <div className="MainContainer">
           <h3>Residential</h3>
           <p>{this.state.housingOccupied} out of {this.state.housingTotal} houses total ({this.state.housingTotal - this.state.housingOccupied} available)</p>
+          <p>Construction cost per house: {this.cost.housing}; Expected property tax revenue: {this.cost.propertyTax * this.state.housingOccupied}</p>
           <div className="Subcontainer">
             <button onClick={() => this.updateHousing(-100)}>-100</button>
             <button onClick={() => this.updateHousing(- 10)}>-10</button>
@@ -134,16 +211,11 @@ class App extends React.Component {
             <button onClick={() => this.updateHousing( 100)}>+100</button>
           </div>
         </div>
-        <div className="MainContainer">
-          <h3>Population</h3>
-          <p>Population is updated each week</p>
-          <p>{this.updatePopulation()}</p>
-        </div>
-        <div className="MainContainer">
-          <h3>Workforce</h3>
-          <p>Maximum eligible workforce: {this.popMgr.YoungAdultPop + this.popMgr.AdultPop}</p>
-        </div>
-        <div className="MainContainer">
+        {/* <div className="MainContainer">
+          <h3>Population Breakdown</h3>
+
+        </div> */}
+        {/* <div className="MainContainer">
           <h3>DEBUG PANEL</h3>
           <p>Occupied houses
             <button onClick={() => this.updateOccupancy(-Infinity)}>ZERO</button>
@@ -153,7 +225,10 @@ class App extends React.Component {
             <button onClick={() => this.updateOccupancy( 10)}>+10</button>
             <button onClick={() => this.updateOccupancy(Infinity)}>MAX</button>
           </p>
-        </div>
+          <p>Test field: {this.state.testField}</p>
+        </div> */}
+        <EducationManager methodFromParent={this.getDataFromChild} maxStudentCount={this.state.studentCount} costPerSeat={this.cost.education}/>
+        <WorkplaceManager methodFromParent={this.getDataFromChild} industrialWorkerCount = {this.state.industrialWorkers} maxWorkerCount={this.state.employeeCount} revenuePerExport={this.cost.revenuePerExport}/>
       </div>
     )
   }
