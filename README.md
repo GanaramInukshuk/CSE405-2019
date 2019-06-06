@@ -84,7 +84,7 @@ STATUS: Implemented
 ### WorkforceManager
 STATUS: Implemented
  - Provides employment capacity for the city's workforce. Workforce is 70% of the total young adult and adult populations.
- - Each worker provides a moderate 
+ - Each worker provides a moderate amount of revenue.
  - Workforce is updated every in-game week.
 
 ### EducationManager
